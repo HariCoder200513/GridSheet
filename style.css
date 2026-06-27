@@ -1,0 +1,16 @@
+body {
+  width: 95vw;
+  height: 95vh;
+}
+.cell {
+  height: 25px;
+  border: 1px solid #ccc;
+}
+
+
+
+.grid 
+{
+  display: grid;
+  grid-template-columns: repeat(26, 105px);
+}
