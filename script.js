@@ -2,17 +2,9 @@ const ROW = 101;
 const COLUMN = 27;
 const grid = document.querySelector(".grid");
 
-
-// cell.addEventListener("click",()=>{
-//   cell.style.border = "2px solid #089949";
-// })
-
 for (let i = 0; i < ROW; i++) {
   for (let j = 0; j < COLUMN; j++) {
     const cell = document.createElement("div");
-    // cell.addEventListener("click", () => {
-    //   cell.style.border = "2px solid #089949";
-    // });
 
     if (i == 0 && j > 0) {
       cell.textContent = String.fromCharCode(65 + j - 1);
@@ -29,11 +21,12 @@ for (let i = 0; i < ROW; i++) {
   }
 }
 
-const cell = document.querySelectorAll(".cell");
-console.log(cell);
-cell.forEach((c) => {
-  c.addEventListener("click", () => {
-    c.style.border = "2px solid #089949";
-  });
-});
-
+let previous=null;
+grid.addEventListener("click",(e)=>{
+  const current=e.target;
+  if(previous) {
+    previous.style.border="1px solid #ccc";
+  }
+  current.style.border="2px solid #089949";
+  previous=current;
+})
