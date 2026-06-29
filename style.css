@@ -12,6 +12,10 @@ body {
   border: 1px solid #ccc;
 }
 
+.cell[contenteditable="true"] {
+  outline: none;
+}
+
 .selected {
   border: 2px solid #089949;
 }

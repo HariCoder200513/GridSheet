@@ -16,6 +16,11 @@ for (let i = 0; i < ROW; i++) {
       cell.style.textAlign = "center";
     }
 
+    if(i!=0&&j!=0)
+    {
+      cell.setAttribute("contenteditable", "true");
+    }
+
     cell.classList.add("cell");
     grid.appendChild(cell);
   }
