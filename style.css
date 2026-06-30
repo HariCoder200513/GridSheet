@@ -29,3 +29,8 @@ body {
   display: grid;
   grid-template-columns: repeat(27, 105px);
 }
+
+.cell:focus {
+  outline: none;
+  border: 2px solid #089949 !important;
+}
