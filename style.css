@@ -13,7 +13,7 @@
   line-height: 23px;
   background: #fff;
   box-sizing: border-box;
-  padding: 2px 5px;
+  /* padding: 2px 5px; */
   outline: none;
   display: flex;
   align-items: center;
@@ -26,5 +26,5 @@
 }
 
 .active-cell {
-  outline: 2px solid #089949 !important;
+  border: 2px solid #089949 !important;
 }

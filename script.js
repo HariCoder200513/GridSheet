@@ -3,6 +3,15 @@ const ROWS = 100;
 const COLS = 26;
 const grid = document.querySelector(".grid");
 
+class Pair {
+  constructor(row, col) {
+    this.row = row;
+    this.col = col;
+  }
+}
+
+const map = new Map();
+
 grid.style.display = "grid";
 grid.style.gridTemplateColumns = `repeat(${COLS + 1}, 105px)`;
 
@@ -23,8 +32,7 @@ for (let i = 0; i <= ROWS; i++) {
       cell.style.background = "#f1f1f1";
       cell.style.zIndex = "2";
       cell.style.textAlign = "center";
-    }
-    else if (j === 0) {
+    } else if (j === 0) {
       cell.textContent = i;
       cell.classList.add("header-cell");
       cell.style.position = "sticky";
@@ -64,6 +72,14 @@ grid.addEventListener("keydown", (e) => {
       `.cell[data-row="${row}"][data-col="${col - 1}"]`,
     );
   } else if (e.key === "Enter") {
+    // console.log(e.target.textContent);
+    const p = new Pair(
+      e.target.getAttribute("data-row"),
+      e.target.getAttribute("data-col"),
+    );
+    map.set(p, e.target.textContent);
+    // console.log(map);
+    // map[]
     e.preventDefault();
     next = grid.querySelector(
       `.cell[data-row="${row + 1}"][data-col="${col}"]`,
