@@ -3,12 +3,6 @@ const ROWS = 100;
 const COLS = 26;
 const grid = document.querySelector(".grid");
 
-class Pair {
-  constructor(row, col) {
-    this.row = row;
-    this.col = col;
-  }
-}
 
 const map = new Map();
 
