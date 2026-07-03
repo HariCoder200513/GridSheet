@@ -1,106 +1,94 @@
-const ROW = 101;
-const COLUMN = 27;
+"use strict";
+const ROWS = 100;
+const COLS = 26;
 const grid = document.querySelector(".grid");
 
-for (let i = 0; i < ROW; i++) {
-  for (let j = 0; j < COLUMN; j++) {
-    const cell = document.createElement("div");
-    cell.setAttribute("data-row", i);
-    cell.setAttribute("data-column", j);
-    if (i == 0 && j > 0) {
-      cell.textContent = String.fromCharCode(65 + j - 1);
-      cell.style.textAlign = "center";
-    }
+grid.style.display = "grid";
+grid.style.gridTemplateColumns = `repeat(${COLS + 1}, 105px)`;
 
-    if (i == 0) {
+for (let i = 0; i <= ROWS; i++) {
+  for (let j = 0; j <= COLS; j++) {
+    const cell = document.createElement("div");
+    cell.classList.add("cell");
+    cell.setAttribute("data-row", i);
+    cell.setAttribute("data-col", j);
+
+    if (i === 0 && j === 0) {
+      cell.classList.add("header-cell");
+    } else if (i === 0) {
+      cell.textContent = String.fromCharCode(64 + j);
+      cell.classList.add("header-cell");
       cell.style.position = "sticky";
       cell.style.top = "0";
-      cell.style.backgroundColor = "#f1f1f1";
-    }
-
-    if (j == 0) {
-      cell.style.position = "sticky";
-      cell.style.left = "0";
-      cell.style.backgroundColor = "#f1f1f1";
-    }
-
-    if (j == 0 && i > 0) {
-      cell.textContent = i;
+      cell.style.background = "#f1f1f1";
+      cell.style.zIndex = "2";
       cell.style.textAlign = "center";
     }
-
-    if (i > 0 && j > 0) {
+    else if (j === 0) {
+      cell.textContent = i;
+      cell.classList.add("header-cell");
+      cell.style.position = "sticky";
+      cell.style.left = "0";
+      cell.style.background = "#f1f1f1";
+      cell.style.zIndex = "2";
+      cell.style.textAlign = "center";
+    } else {
       cell.setAttribute("contenteditable", "true");
+      cell.setAttribute("spellcheck", "false");
     }
 
-    cell.classList.add("cell");
     grid.appendChild(cell);
   }
 }
 
 grid.addEventListener("keydown", (e) => {
-  if (e.key == "ArrowDown") {
-    let current = e.target;
-    current.style.border = "1px solid #ccc";
-    let row = parseInt(current.getAttribute("data-row"));
-    let column = parseInt(current.getAttribute("data-column"));
-    let nextRow = row + 1;
-    let nextCell = document.querySelector(
-      `.cell[data-row="${nextRow}"][data-column="${column}"]`,
+  if (
+    !e.target.classList.contains("cell") ||
+    !e.target.hasAttribute("contenteditable")
+  )
+    return;
+  const row = +e.target.getAttribute("data-row");
+  const col = +e.target.getAttribute("data-col");
+  let next;
+  if (e.key === "ArrowDown") {
+    next = grid.querySelector(
+      `.cell[data-row="${row + 1}"][data-col="${col}"]`,
     );
-    if (nextCell) {
-      nextCell.focus();
-    }
-  }
-  if (e.key == "ArrowUp") {
-    let current = e.target;
-    current.style.border = "1px solid #ccc";
-    let row = parseInt(current.getAttribute("data-row"));
-    let column = parseInt(current.getAttribute("data-column"));
-    let nextRow = row - 1;
-    let nextCell = document.querySelector(
-      `.cell[data-row="${nextRow}"][data-column="${column}"]`,
+  } else if (e.key === "ArrowUp") {
+    next = grid.querySelector(
+      `.cell[data-row="${row - 1}"][data-col="${col}"]`,
     );
-    if (nextCell) {
-      nextCell.focus();
-    }
-  }
-  if (e.key == "ArrowLeft") {
-    let current = e.target;
-    current.style.border = "1px solid #ccc";
-    let row = parseInt(current.getAttribute("data-row"));
-    let col = parseInt(current.getAttribute("data-column"));
-    const prev = document.querySelector(
-      `.cell[data-row="${row}"][data-column="${col-1}"]`,
+  } else if (e.key === "ArrowLeft" || (e.key === "Tab" && e.shiftKey)) {
+    e.preventDefault();
+    next = grid.querySelector(
+      `.cell[data-row="${row}"][data-col="${col - 1}"]`,
     );
-    // console.log(prev)
-    if (prev) {
-      prev.focus();
-    }
-    // console.log(typeof(row))
-  }
-  if (e.key == "ArrowRight") {
-    let current = e.target;
-    current.style.border = "1px solid #ccc";
-    let row = parseInt(current.getAttribute("data-row"));
-    let col = parseInt(current.getAttribute("data-column"));
-    const prev = document.querySelector(
-      `.cell[data-row="${row}"][data-column="${col+1}"]`,
+  } else if (e.key === "Enter") {
+    e.preventDefault();
+    next = grid.querySelector(
+      `.cell[data-row="${row + 1}"][data-col="${col}"]`,
     );
-    // console.log(prev)
-    if (prev) {
-      prev.focus();
-    }
-    // console.log(typeof(row))
+  } else if (e.key === "ArrowRight" || e.key === "Tab") {
+    e.preventDefault();
+    next = grid.querySelector(
+      `.cell[data-row="${row}"][data-col="${col + 1}"]`,
+    );
+  } else if (e.key === "ArrowRight" || e.key === "Tab" || e.key === "Enter") {
+    e.preventDefault();
+    next = grid.querySelector(
+      `.cell[data-row="${row}"][data-col="${col + 1}"]`,
+    );
   }
+  if (next && next.hasAttribute("contenteditable")) next.focus();
 });
 
-let previous = null;
-grid.addEventListener("click", (e) => {
-  const current = e.target;
-  if (previous) {
-    previous.style.border = "1px solid #ccc";
+grid.addEventListener("focusin", (e) => {
+  if (e.target.classList.contains("cell")) {
+    e.target.classList.add("active-cell");
   }
-  current.style.border = "2px solid #089949";
-  previous = current;
+});
+grid.addEventListener("focusout", (e) => {
+  if (e.target.classList.contains("cell")) {
+    e.target.classList.remove("active-cell");
+  }
 });
