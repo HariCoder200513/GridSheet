@@ -72,14 +72,10 @@ grid.addEventListener("keydown", (e) => {
       `.cell[data-row="${row}"][data-col="${col - 1}"]`,
     );
   } else if (e.key === "Enter") {
-    // console.log(e.target.textContent);
-    const p = new Pair(
-      e.target.getAttribute("data-row"),
-      e.target.getAttribute("data-col"),
-    );
-    map.set(p, e.target.textContent);
-    // console.log(map);
-    // map[]
+    console.log(row);
+    console.log(col);
+    const key = `${row},${col}`;
+    map.set(key, e.target.textContent);
     e.preventDefault();
     next = grid.querySelector(
       `.cell[data-row="${row + 1}"][data-col="${col}"]`,
