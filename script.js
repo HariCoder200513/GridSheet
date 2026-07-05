@@ -94,7 +94,15 @@ grid.addEventListener("focusin", (e) => {
   }
 });
 grid.addEventListener("focusout", (e) => {
-  if (e.target.classList.contains("cell")) {
-    e.target.classList.remove("active-cell");
+  if (e.target.classList.contains("cell") && e.target.hasAttribute("contenteditable")) {
+    const row = e.target.getAttribute("data-row");
+    const col = e.target.getAttribute("data-col");
+    const value = e.target.textContent.trim();
+    const key = `${row},${col}`;
+    if (value) {
+      cellData.set(key, value);
+    } else {
+      cellData.delete(key);
+    }
   }
 });
