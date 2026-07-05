@@ -100,9 +100,9 @@ grid.addEventListener("focusout", (e) => {
     const value = e.target.textContent.trim();
     const key = `${row},${col}`;
     if (value) {
-      cellData.set(key, value);
+      map.set(key, value);
     } else {
-      cellData.delete(key);
+      map.delete(key);
     }
   }
 });
