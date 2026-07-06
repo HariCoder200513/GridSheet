@@ -2,11 +2,75 @@
 const ROWS = 100;
 const COLS = 26;
 const grid = document.querySelector(".grid");
+const formulaInput = document.getElementById("formulaInput");
+const cellRefDisplay = document.getElementById("cellRef");
 
 const map = new Map();
 
 grid.style.display = "grid";
 grid.style.gridTemplateColumns = `repeat(${COLS + 1}, 105px)`;
+
+function colToIndex(col) {
+  return col.toUpperCase().charCodeAt(0) - 64;
+}
+
+function indexToCol(col) {
+  return String.fromCharCode(64 + col);
+}
+
+function getCellRef(row, col) {
+  return `${indexToCol(col)}${row}`;
+}
+
+function evaluateFormula(expr) {
+  if (!expr.startsWith("=")) return expr;
+  const formula = expr.slice(1).trim().toUpperCase();
+
+  let safe = formula.replace(/[A-Z]+\d+/g, (ref) => {
+    const colLetters = ref.match(/[A-Z]+/)[0];
+    const rowNum = parseInt(ref.match(/\d+/)[0], 10);
+    const c = colToIndex(colLetters);
+    const key = `${rowNum},${c}`;
+    const val = map.get(key);
+    if (val === undefined) return "0";
+    if (val.startsWith("=")) {
+      const inner = evaluateFormula(val);
+      return isNaN(Number(inner)) ? "0" : inner;
+    }
+    return isNaN(Number(val)) ? "0" : val;
+  });
+
+  if (/[^0-9+\-*/.() ]/.test(safe)) return "#ERR!";
+  if (/\/\s*0(?!\.)/.test(safe) || /\/\s*0\.0*$/.test(safe)) return "#DIV/0!";
+
+  try {
+    const result = Function('"use strict"; return (' + safe + ")")();
+    if (!isFinite(result)) return "#DIV/0!";
+    return String(Math.round(result * 1e10) / 1e10);
+  } catch {
+    return "#ERR!";
+  }
+}
+
+function getComputedValue(key) {
+  const raw = map.get(key);
+  if (!raw) return "";
+  if (raw.startsWith("=")) return evaluateFormula(raw);
+  return raw;
+}
+
+function showCellContent(cell, row, col) {
+  const key = `${row},${col}`;
+  const raw = map.get(key);
+  if (raw && raw.startsWith("=")) {
+    cell.textContent = getComputedValue(key);
+  }
+}
+
+function setCellDisplay(cell, row, col) {
+  const key = `${row},${col}`;
+  cell.textContent = getComputedValue(key);
+}
 
 for (let i = 0; i <= ROWS; i++) {
   for (let j = 0; j <= COLS; j++) {
@@ -42,6 +106,20 @@ for (let i = 0; i <= ROWS; i++) {
   }
 }
 
+function findCell(row, col) {
+  return grid.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
+}
+
+function recalcAll() {
+  for (const [key, val] of map.entries()) {
+    if (val && val.startsWith("=")) {
+      const [r, c] = key.split(",");
+      const cell = findCell(r, c);
+      if (cell) setCellDisplay(cell, r, c);
+    }
+  }
+}
+
 grid.addEventListener("keydown", (e) => {
   if (
     !e.target.classList.contains("cell") ||
@@ -52,72 +130,91 @@ grid.addEventListener("keydown", (e) => {
   const col = +e.target.getAttribute("data-col");
   let next;
   if (e.key === "ArrowDown") {
-    next = grid.querySelector(
-      `.cell[data-row="${row + 1}"][data-col="${col}"]`,
-    );
+    next = findCell(row + 1, col);
   } else if (e.key === "ArrowUp") {
-    next = grid.querySelector(
-      `.cell[data-row="${row - 1}"][data-col="${col}"]`,
-    );
+    next = findCell(row - 1, col);
   } else if (e.key === "ArrowLeft" || (e.key === "Tab" && e.shiftKey)) {
     e.preventDefault();
-    next = grid.querySelector(
-      `.cell[data-row="${row}"][data-col="${col - 1}"]`,
-    );
+    next = findCell(row, col - 1);
   } else if (e.key === "Enter") {
     e.preventDefault();
-    next = grid.querySelector(
-      `.cell[data-row="${row + 1}"][data-col="${col}"]`,
-    );
+    next = findCell(row + 1, col);
   } else if (e.key === "ArrowRight" || e.key === "Tab") {
     e.preventDefault();
-    next = grid.querySelector(
-      `.cell[data-row="${row}"][data-col="${col + 1}"]`,
-    );
+    next = findCell(row, col + 1);
   }
 
   if (next && next.hasAttribute("contenteditable")) next.focus();
 });
+
+let activeCell = null;
 
 grid.addEventListener("focusin", (e) => {
   if (
     e.target.classList.contains("cell") &&
     e.target.hasAttribute("contenteditable")
   ) {
+    activeCell = e.target;
     e.target.classList.add("active-cell");
-    const row = e.target.getAttribute("data-row");
-    const col = e.target.getAttribute("data-col");
-    const rowHeader = grid.querySelector(
-      `.cell[data-row="${row}"][data-col="0"]`,
-    );
-    const colHeader = grid.querySelector(
-      `.cell[data-row="0"][data-col="${col}"]`,
-    );
+    const row = +e.target.getAttribute("data-row");
+    const col = +e.target.getAttribute("data-col");
+    const rowHeader = findCell(row, 0);
+    const colHeader = findCell(0, col);
     if (rowHeader) rowHeader.classList.add("header-highlight");
     if (colHeader) colHeader.classList.add("header-highlight");
+
+    cellRefDisplay.textContent = getCellRef(row, col);
+    const key = `${row},${col}`;
+    const raw = map.get(key) || "";
+    e.target.textContent = raw;
+    formulaInput.value = raw;
   }
 });
+
 grid.addEventListener("focusout", (e) => {
   if (
     e.target.classList.contains("cell") &&
     e.target.hasAttribute("contenteditable")
   ) {
-    const row = e.target.getAttribute("data-row");
-    const col = e.target.getAttribute("data-col");
+    const row = +e.target.getAttribute("data-row");
+    const col = +e.target.getAttribute("data-col");
     const value = e.target.textContent.trim();
     const key = `${row},${col}`;
 
     if (value) map.set(key, value);
     else map.delete(key);
 
+    setCellDisplay(e.target, row, col);
+    recalcAll();
+
     e.target.classList.remove("active-cell");
-    const rowHeader = grid.querySelector(
-      `.cell[data-row="${row}"][data-col="0"]`,
-    );
-    const colHeader = grid.querySelector(
-      `.cell[data-row="0"][data-col="${col}"]`,
-    );
+    const rowHeader = findCell(row, 0);
+    const colHeader = findCell(0, col);
     if (rowHeader) rowHeader.classList.remove("header-highlight");
     if (colHeader) colHeader.classList.remove("header-highlight");
+
+    activeCell = null;
   }
+});
+
+formulaInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (!activeCell) return;
+    const row = +activeCell.getAttribute("data-row");
+    const col = +activeCell.getAttribute("data-col");
+    const value = formulaInput.value.trim();
+    const key = `${row},${col}`;
+
+    if (value) map.set(key, value);
+    else map.delete(key);
+
+    setCellDisplay(activeCell, row, col);
+    recalcAll();
+    activeCell.focus();
+  }
+});
+
+formulaInput.addEventListener("focusin", () => {
+  if (activeCell) activeCell.focus();
 });
