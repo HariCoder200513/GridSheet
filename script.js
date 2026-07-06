@@ -3,7 +3,6 @@ const ROWS = 100;
 const COLS = 26;
 const grid = document.querySelector(".grid");
 
-
 const map = new Map();
 
 grid.style.display = "grid";
@@ -66,10 +65,6 @@ grid.addEventListener("keydown", (e) => {
       `.cell[data-row="${row}"][data-col="${col - 1}"]`,
     );
   } else if (e.key === "Enter") {
-    console.log(row);
-    console.log(col);
-    const key = `${row},${col}`;
-    map.set(key, e.target.textContent);
     e.preventDefault();
     next = grid.querySelector(
       `.cell[data-row="${row + 1}"][data-col="${col}"]`,
@@ -79,30 +74,50 @@ grid.addEventListener("keydown", (e) => {
     next = grid.querySelector(
       `.cell[data-row="${row}"][data-col="${col + 1}"]`,
     );
-  } else if (e.key === "ArrowRight" || e.key === "Tab" || e.key === "Enter") {
-    e.preventDefault();
-    next = grid.querySelector(
-      `.cell[data-row="${row}"][data-col="${col + 1}"]`,
-    );
   }
+
   if (next && next.hasAttribute("contenteditable")) next.focus();
 });
 
 grid.addEventListener("focusin", (e) => {
-  if (e.target.classList.contains("cell")) {
+  if (
+    e.target.classList.contains("cell") &&
+    e.target.hasAttribute("contenteditable")
+  ) {
     e.target.classList.add("active-cell");
+    const row = e.target.getAttribute("data-row");
+    const col = e.target.getAttribute("data-col");
+    const rowHeader = grid.querySelector(
+      `.cell[data-row="${row}"][data-col="0"]`,
+    );
+    const colHeader = grid.querySelector(
+      `.cell[data-row="0"][data-col="${col}"]`,
+    );
+    if (rowHeader) rowHeader.classList.add("header-highlight");
+    if (colHeader) colHeader.classList.add("header-highlight");
   }
 });
 grid.addEventListener("focusout", (e) => {
-  if (e.target.classList.contains("cell") && e.target.hasAttribute("contenteditable")) {
+  if (
+    e.target.classList.contains("cell") &&
+    e.target.hasAttribute("contenteditable")
+  ) {
     const row = e.target.getAttribute("data-row");
     const col = e.target.getAttribute("data-col");
     const value = e.target.textContent.trim();
     const key = `${row},${col}`;
-    if (value) {
-      map.set(key, value);
-    } else {
-      map.delete(key);
-    }
+
+    if (value) map.set(key, value);
+    else map.delete(key);
+
+    e.target.classList.remove("active-cell");
+    const rowHeader = grid.querySelector(
+      `.cell[data-row="${row}"][data-col="0"]`,
+    );
+    const colHeader = grid.querySelector(
+      `.cell[data-row="0"][data-col="${col}"]`,
+    );
+    if (rowHeader) rowHeader.classList.remove("header-highlight");
+    if (colHeader) colHeader.classList.remove("header-highlight");
   }
 });

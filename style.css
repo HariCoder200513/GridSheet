@@ -28,3 +28,7 @@
 .active-cell {
   border: 2px solid #089949 !important;
 }
+
+.header-highlight {
+  background: #d4e8dc !important;
+}
