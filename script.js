@@ -22,30 +22,18 @@ function getCellRef(row, col) {
   return `${indexToCol(col)}${row}`;
 }
 
+const tokenizer = new Tokenizer();
+const parser = new Parser();
+const evaluator = new Evaluator(map);
+
 function evaluateFormula(expr) {
   if (!expr.startsWith("=")) return expr;
   const formula = expr.slice(1).trim().toUpperCase();
-
-  let safe = formula.replace(/[A-Z]+\d+/g, (ref) => {
-    const colLetters = ref.match(/[A-Z]+/)[0];
-    const rowNum = parseInt(ref.match(/\d+/)[0], 10);
-    const c = colToIndex(colLetters);
-    const key = `${rowNum},${c}`;
-    const val = map.get(key);
-    if (val === undefined) return "0";
-    if (val.startsWith("=")) {
-      const inner = evaluateFormula(val);
-      return isNaN(Number(inner)) ? "0" : inner;
-    }
-    return isNaN(Number(val)) ? "0" : val;
-  });
-
-  if (/[^0-9+\-*/.() ]/.test(safe)) return "#ERR!";
-  if (/\/\s*0(?!\.)/.test(safe) || /\/\s*0\.0*$/.test(safe)) return "#DIV/0!";
-
   try {
-    const result = Function('"use strict"; return (' + safe + ")")();
-    if (!isFinite(result)) return "#DIV/0!";
+    const tokens = tokenizer.tokenize(formula);
+    const ast = parser.parse(tokens);
+    const result = evaluator.evaluate(ast);
+    if (typeof result === "string") return result;
     return String(Math.round(result * 1e10) / 1e10);
   } catch {
     return "#ERR!";
