@@ -206,3 +206,33 @@ formulaInput.addEventListener("keydown", (e) => {
 formulaInput.addEventListener("focusin", () => {
   if (activeCell) activeCell.focus();
 });
+
+function saveSheet() {
+  const data = Object.fromEntries(map);
+  localStorage.setItem("gridsheet-data", JSON.stringify(data));
+  const btn = document.getElementById("saveSheet");
+  btn.textContent = "Saved!";
+  setTimeout(() => (btn.textContent = "Save"), 1000);
+}
+
+function loadSheet() {
+  const raw = localStorage.getItem("gridsheet-data");
+  if (!raw) {
+    alert("No saved data found.");
+    return;
+  }
+  map.clear();
+  const data = JSON.parse(raw);
+  for (const [key, val] of Object.entries(data)) {
+    map.set(key, val);
+  }
+  for (let r = 1; r <= ROWS; r++) {
+    for (let c = 1; c <= COLS; c++) {
+      const cell = findCell(r, c);
+      if (cell) setCellDisplay(cell, r, c);
+    }
+  }
+}
+
+document.getElementById("saveSheet").addEventListener("click", saveSheet);
+document.getElementById("loadSheet").addEventListener("click", loadSheet);
