@@ -136,6 +136,7 @@ grid.addEventListener("keydown", (e) => {
 });
 
 let activeCell = null;
+let selectedCell = null;
 
 grid.addEventListener("focusin", (e) => {
   if (
@@ -143,6 +144,7 @@ grid.addEventListener("focusin", (e) => {
     e.target.hasAttribute("contenteditable")
   ) {
     activeCell = e.target;
+    selectedCell=e.target;
     e.target.classList.add("active-cell");
     const row = +e.target.getAttribute("data-row");
     const col = +e.target.getAttribute("data-col");
@@ -188,7 +190,7 @@ grid.addEventListener("focusout", (e) => {
 formulaInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
-    if (!activeCell) return;
+    if (!selectedCell) return;
     const row = +activeCell.getAttribute("data-row");
     const col = +activeCell.getAttribute("data-col");
     const value = formulaInput.value.trim();
@@ -204,7 +206,13 @@ formulaInput.addEventListener("keydown", (e) => {
 });
 
 formulaInput.addEventListener("focusin", () => {
-  if (activeCell) activeCell.focus();
+  if (!selectedCell) return;
+
+  const row = +selectedCell.getAttribute("data-row");
+  const col = +selectedCell.getAttribute("data-col");
+
+  const key = `${row},${col}`;
+  formulaInput.value = map.get(key) || "";
 });
 
 function saveSheet() {
