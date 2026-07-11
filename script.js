@@ -190,18 +190,25 @@ grid.addEventListener("focusout", (e) => {
 formulaInput.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
     e.preventDefault();
+
     if (!selectedCell) return;
-    const row = +activeCell.getAttribute("data-row");
-    const col = +activeCell.getAttribute("data-col");
+
+    const row = +selectedCell.getAttribute("data-row");
+    const col = +selectedCell.getAttribute("data-col");
+
     const value = formulaInput.value.trim();
     const key = `${row},${col}`;
 
-    if (value) map.set(key, value);
-    else map.delete(key);
+    if (value) {
+      map.set(key, value);
+    } else {
+      map.delete(key);
+    }
 
-    setCellDisplay(activeCell, row, col);
+    setCellDisplay(selectedCell, row, col);
     recalcAll();
-    activeCell.focus();
+
+    selectedCell.focus();
   }
 });
 
