@@ -51,10 +51,12 @@ class Evaluator {
 
   evalFormulaString(expr) {
     const formula = expr.slice(1).trim().toUpperCase();
-    const tokenizer = new Tokenizer();
-    const parser = new Parser();
-    const tokens = tokenizer.tokenize(formula);
-    const ast = parser.parse(tokens);
-    return this.evaluate(ast);
+    try {
+      const tokens = tokenizer.tokenize(formula);
+      const ast = parser.parse(tokens);
+      return this.evalNode(ast);
+    } catch {
+      return "#ERR!";
+    }
   }
 }

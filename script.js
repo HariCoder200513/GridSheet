@@ -25,6 +25,7 @@ function getCellRef(row, col) {
 const tokenizer = new Tokenizer();
 const parser = new Parser();
 const evaluator = new Evaluator(map);
+const depGraph = new DependencyGraph();
 
 function evaluateFormula(expr) {
   if (!expr.startsWith("=")) return expr;
@@ -98,9 +99,12 @@ function findCell(row, col) {
   return grid.querySelector(`.cell[data-row="${row}"][data-col="${col}"]`);
 }
 
-function recalcAll() {
-  for (const [key, val] of map.entries()) {
-    if (val && val.startsWith("=")) {
+function recalcAffected(changedKey) {
+  const affected = depGraph.getAffectedCells(changedKey);
+
+  for (const key of affected) {
+    const raw = map.get(key);
+    if (raw && raw.startsWith("=")) {
       const [r, c] = key.split(",");
       const cell = findCell(r, c);
       if (cell) setCellDisplay(cell, r, c);
@@ -171,11 +175,28 @@ grid.addEventListener("focusout", (e) => {
     const value = e.target.textContent.trim();
     const key = `${row},${col}`;
 
+    const oldValue = map.get(key) || "";
+
     if (value) map.set(key, value);
     else map.delete(key);
 
+    const success = depGraph.update(key, value || null, tokenizer, parser);
+    if (!success) {
+      if (oldValue) map.set(key, oldValue);
+      else map.delete(key);
+      depGraph.update(key, oldValue || null, tokenizer, parser);
+      e.target.textContent = "#CYCLE!";
+      e.target.classList.remove("active-cell");
+      const rowHeader = findCell(row, 0);
+      const colHeader = findCell(0, col);
+      if (rowHeader) rowHeader.classList.remove("header-highlight");
+      if (colHeader) colHeader.classList.remove("header-highlight");
+      activeCell = null;
+      return;
+    }
+
     setCellDisplay(e.target, row, col);
-    recalcAll();
+    recalcAffected(key);
 
     e.target.classList.remove("active-cell");
     const rowHeader = findCell(row, 0);
@@ -199,14 +220,26 @@ formulaInput.addEventListener("keydown", (e) => {
     const value = formulaInput.value.trim();
     const key = `${row},${col}`;
 
+    const oldValue = map.get(key) || "";
+
     if (value) {
       map.set(key, value);
     } else {
       map.delete(key);
     }
 
+    const success = depGraph.update(key, value || null, tokenizer, parser);
+    if (!success) {
+      if (oldValue) map.set(key, oldValue);
+      else map.delete(key);
+      depGraph.update(key, oldValue || null, tokenizer, parser);
+      setCellDisplay(selectedCell, row, col);
+      selectedCell.focus();
+      return;
+    }
+
     setCellDisplay(selectedCell, row, col);
-    recalcAll();
+    recalcAffected(key);
 
     selectedCell.focus();
   }
@@ -241,10 +274,27 @@ function loadSheet() {
   for (const [key, val] of Object.entries(data)) {
     map.set(key, val);
   }
+
+  depGraph.rebuildAll(map, tokenizer, parser);
+
+  const allFormulaKeys = [];
+  for (const [key, val] of map) {
+    if (val && val.startsWith("=")) allFormulaKeys.push(key);
+  }
+  const sorted = depGraph._topologicalSort(new Set(allFormulaKeys));
+  for (const key of sorted) {
+    const [r, c] = key.split(",");
+    const cell = findCell(r, c);
+    if (cell) setCellDisplay(cell, r, c);
+  }
+
   for (let r = 1; r <= ROWS; r++) {
     for (let c = 1; c <= COLS; c++) {
-      const cell = findCell(r, c);
-      if (cell) setCellDisplay(cell, r, c);
+      const key = `${r},${c}`;
+      if (!map.get(key)?.startsWith("=")) {
+        const cell = findCell(r, c);
+        if (cell) setCellDisplay(cell, r, c);
+      }
     }
   }
 }

@@ -13,8 +13,6 @@ class Tokenizer {
         continue;
       }
 
-      console.log(tokens)
-
       if (ch === "(") {
         tokens.push({ type: "PAREN_OPEN", value: "(" });
         i++;
